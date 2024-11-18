@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class PriorityQueue<T>
 {
-    Dictionary<T, int> _allElements = new Dictionary<T, int>();
+    Dictionary<T, float> _allElements = new Dictionary<T, float>();
     public int Count { get { return _allElements.Count; } }
-    public void Enqueue(T elem, int cost)
+    public void Enqueue(T elem, float cost)
     {
         if (!_allElements.ContainsKey(elem))
             _allElements.Add(elem, cost);

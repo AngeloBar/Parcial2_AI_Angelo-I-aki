@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 public class Enemy : MonoBehaviour
 {
@@ -11,6 +12,10 @@ public class Enemy : MonoBehaviour
     public LayerMask mask;
     public float speed;
 
+    public Transform nodeTarget;
+
+    public List<Node> path = new();
+
     private void Update()
     {
         if (InView(target))
@@ -19,7 +24,24 @@ public class Enemy : MonoBehaviour
             Vector3 lookAtDirection = (target.position - transform.position).normalized;
             Movement(lookAtDirection);
 
-        } 
+        }
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            print("funca");
+            path = PathFinding.instance.GetPath(this.transform.position, nodeTarget.transform.position);
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (path.Count > 0)
+        {
+            foreach (Node node in path)
+            {
+                Gizmos.DrawSphere(node.transform.position, 1);
+            }
+        }
     }
 
     public bool InView(Transform obj)

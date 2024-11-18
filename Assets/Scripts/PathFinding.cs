@@ -5,9 +5,22 @@ using UnityEngine;
 
 public class PathFinding : MonoBehaviour
 {
+    public static PathFinding instance;
+
+    private void Awake()
+    {
+        if (instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        instance = this;
+    }
+
     public List<Node> GetPath(Vector3 PosInicial, Vector3 PosFinal)
     {
         var nodoInicial = NodoMasCercano(PosInicial);
+        nodoInicial.heuristic = 0;  
         var nodoFinal = NodoMasCercano(PosFinal);
 
         var openNode = new PriorityQueue<Node>();
@@ -15,9 +28,17 @@ public class PathFinding : MonoBehaviour
 
         openNode.Enqueue(nodoInicial, nodoInicial.heuristic);
 
-        while (openNode.Count > 0)
+        var watchDog = 5000;
+        while (openNode.Count > 0 && watchDog > 0)
         {
             var actualNode = openNode.Dequeue();
+
+            if (actualNode == nodoFinal)
+            {
+                break;
+            }
+
+            watchDog--;
 
             foreach (var vecino in actualNode.Vecinos)
             {
@@ -27,8 +48,8 @@ public class PathFinding : MonoBehaviour
                 }
 
                 var heuristic = actualNode.heuristic +
-                    Mathf.RoundToInt(Vector3.Distance(actualNode.transform.position, vecino.transform.position)) +
-                    Mathf.RoundToInt(Vector3.Distance(nodoFinal.transform.position, vecino.transform.position));
+                    Vector3.Distance(actualNode.transform.position, vecino.transform.position) +
+                    Vector3.Distance(nodoFinal.transform.position, vecino.transform.position);
 
                 var heuristicMismaDist = actualNode.heuristic + 1 + 
                     Vector3.Distance(nodoFinal.transform.position, vecino.transform.position);
@@ -36,9 +57,25 @@ public class PathFinding : MonoBehaviour
                 if (vecino.heuristic > heuristic)
                 {
                     vecino.heuristic = heuristic;
+                    vecino.nodoPrevio = actualNode;
                 }
+
+                openNode.Enqueue(vecino, vecino.heuristic);
             }
+            closeNode.Add(actualNode); 
         }
+
+        var path = new List<Node>();
+        var nodePath = nodoFinal;
+        path.Add(nodePath);
+        while (nodePath != nodoInicial)
+        {
+            nodePath = nodePath.nodoPrevio;
+            path.Add(nodePath);
+        }
+
+        path.Reverse();
+        return path;
     }
 
     private Node NodoMasCercano(Vector3 punto)
@@ -84,7 +121,7 @@ public class PathFinding : MonoBehaviour
         return nodoEnVision;
     }
 
-    public bool EnVision(Vector3 from, Vector3 to)
+    public static bool EnVision(Vector3 from, Vector3 to)
     {
         var dir = to - from;
         return !Physics.Raycast(from, dir, dir.magnitude, LayerMask.GetMask("wall"));
