@@ -6,9 +6,11 @@ public class Node : MonoBehaviour
 {
     [SerializeField] private List<Node> _vecinos = new();
 
+    public List<Node> Vecinos { get { return _vecinos;  } }
+
     [SerializeField] private float searchRange; 
 
-    [SerializeField] private float heuristic;
+    [SerializeField] public int heuristic;
     void Awake()
     {
         var colliders = Physics.OverlapSphere(transform.position, searchRange, LayerMask.GetMask("Node"));
