@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
@@ -20,7 +21,6 @@ public class Enemy : MonoBehaviour
     {
         if (InView(target))
         {
-            print("A LA VISTA");
             Vector3 lookAtDirection = (target.position - transform.position).normalized;
             Movement(lookAtDirection);
 
@@ -50,15 +50,10 @@ public class Enemy : MonoBehaviour
 
         if (dir.magnitude <= radius)
         {
-            print("Esta en el radio");
             if (Vector2.Angle(-transform.right, dir) <= angle * 0.5f)
             {
-                print("Esta en angulo");
                 return LoSight(transform.position, obj.position);
             }
-            
-            else
-                print("No esta en angulo");
         }
         return false;
     }
@@ -70,10 +65,8 @@ public class Enemy : MonoBehaviour
 
         if(Physics.Raycast(start, dir, out RaycastHit hit, distance, mask))
         {
-            print("Vista bloqueada");
             return false;
         }
-            print("Vista no bloqueada");
             return true;
         
     }
@@ -83,5 +76,12 @@ public class Enemy : MonoBehaviour
         direction.z = 0;
 
         transform.position += direction * speed * Time.deltaTime;
+
+        if(direction != Vector3.zero)
+        {
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            angle -= 180f;
+            transform.rotation = Quaternion.Euler(0,0,angle);
+        }
     }
 }
