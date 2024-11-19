@@ -37,7 +37,7 @@ public class PathFinding : MonoBehaviour
             {
                 break;
             }
-
+            Debug.Log(watchDog);
             watchDog--;
 
             foreach (var vecino in actualNode.Vecinos)
@@ -68,8 +68,11 @@ public class PathFinding : MonoBehaviour
         var path = new List<Node>();
         var nodePath = nodoFinal;
         path.Add(nodePath);
+        var numberOfNode = 5000;
         while (nodePath != nodoInicial)
         {
+            numberOfNode--;
+            Debug.Log("se sumo un nodo a la lista: " + numberOfNode);
             nodePath = nodePath.nodoPrevio;
             path.Add(nodePath);
         }

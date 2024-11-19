@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class Node : MonoBehaviour
@@ -32,8 +33,9 @@ public class Node : MonoBehaviour
         }
     }
 
-    private void DrawOnGizmosSelected()
+    private void OnDrawGizmos()
     {
+        if (!Selection.Contains(gameObject)) return;
         Gizmos.color = Color.black;
         Gizmos.DrawWireSphere(transform.position, searchRange);
     }
