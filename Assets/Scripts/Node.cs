@@ -11,7 +11,7 @@ public class Node : MonoBehaviour
 
     [SerializeField] private float searchRange; 
 
-    [SerializeField] public float heuristic = 99999;
+    [SerializeField] public int heuristic = 99999;
 
     public Node nodoPrevio;
     void Awake()
@@ -35,7 +35,6 @@ public class Node : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (!Selection.Contains(gameObject)) return;
         Gizmos.color = Color.black;
         Gizmos.DrawWireSphere(transform.position, searchRange);
     }

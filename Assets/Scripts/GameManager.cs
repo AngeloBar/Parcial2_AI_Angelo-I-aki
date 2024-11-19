@@ -14,8 +14,14 @@ public class GameManager : MonoBehaviour
 
     public bool LoSight(Vector3 start, Vector3 end)
     {
-        print("Esta en el angulo");
-        var dir = end - start;
-        return !Physics.Raycast(start, dir, dir.magnitude, mask);
+        Vector3 dir = (end - start).normalized;
+        float distance = Vector3.Distance(start, end);
+
+        if (Physics.Raycast(start, dir, out RaycastHit hit, distance, mask))
+        {
+            return false;
+        }
+        return true;
+
     }
 }

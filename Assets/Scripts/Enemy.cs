@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
@@ -13,24 +12,94 @@ public class Enemy : MonoBehaviour
     public LayerMask mask;
     public float speed;
 
-    public Transform nodeTarget;
-
     public List<Node> path = new();
+
+    public List<Node> patroll = new();
+
+    public int currentPatrolPoint = 0;
+
+    public Enemy[] allies;
+
+    public bool playerFound;
+
+    public int currentPathPoint;
+
+    private FSM _fsm = new FSM();
+
+    private void Start()
+    {
+        _fsm.AddState(FSM.AgentStates.Patrol, new PatrolState(_fsm, this));
+        _fsm.AddState(FSM.AgentStates.Chase, new ChaseState(_fsm, this));
+        _fsm.AddState(FSM.AgentStates.Seek, new SeekState(_fsm, this));
+        _fsm.AddState(FSM.AgentStates.GoBack, new GoBackState(_fsm, this));
+        _fsm.ChangeState(FSM.AgentStates.Patrol);
+    }
 
     private void Update()
     {
-        if (InView(target))
-        {
-            Vector3 lookAtDirection = (target.position - transform.position).normalized;
-            Movement(lookAtDirection);
+        _fsm.ArtificialUpdate();
+    }
 
-        }
-
-        if (Input.GetKeyDown(KeyCode.F))
+    public void Alert()
+    {
+        for (int i = 0; i < allies.Length; i++)
         {
-            print("funca");
-            path = PathFinding.instance.GetPath(this.transform.position, nodeTarget.transform.position);
+            allies[i].playerFound = true;
         }
+    }
+
+    public void Patrol()
+    {
+        Vector3 lookAtDirection = (patroll[currentPatrolPoint].transform.position - transform.position).normalized;
+        Movement(lookAtDirection);
+
+        if (Vector3.Distance(transform.position, patroll[currentPatrolPoint].transform.position) <= 0.2)
+        {
+            currentPatrolPoint++;
+            if (currentPatrolPoint >= patroll.Count)
+            {
+                currentPatrolPoint = 0;
+            }
+        }
+    }
+
+    public bool Seek()
+    {
+        var Arrive = false;
+
+        Vector3 lookAtDirection = (path[currentPathPoint].transform.position - transform.position).normalized;
+        Movement(lookAtDirection);
+
+        if (Vector3.Distance(transform.position, path[currentPathPoint].transform.position) <= 0.2)
+        {
+            currentPathPoint++;
+            Debug.Log(Arrive);
+            if (currentPathPoint >= path.Count)
+            {
+                Arrive = true;
+                currentPathPoint = 0;
+            }
+        }
+        return Arrive;
+    }
+
+    public bool GoBack()
+    {
+        var Arrive = false;
+
+        Vector3 lookAtDirection = (path[currentPathPoint].transform.position - transform.position).normalized;
+        Movement(lookAtDirection);
+
+        if (Vector3.Distance(transform.position, path[currentPathPoint].transform.position) <= 0.2)
+        {
+            currentPathPoint++;
+            if (currentPathPoint >= path.Count)
+            {
+                currentPathPoint = 0;
+                Arrive = true;
+            }
+        }
+        return Arrive;
     }
 
     private void OnDrawGizmos()

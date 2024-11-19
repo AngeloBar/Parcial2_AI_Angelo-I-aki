@@ -1,11 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
+using Unity.VisualScripting;
 using UnityEngine;
 
-public class PathFinding : MonoBehaviour
+public class Pathfinding : MonoBehaviour
 {
-    public static PathFinding instance;
+    public static Pathfinding instance;
 
     private void Awake()
     {
@@ -17,116 +17,51 @@ public class PathFinding : MonoBehaviour
         instance = this;
     }
 
-    public List<Node> GetPath(Vector3 PosInicial, Vector3 PosFinal)
+    public List<Node> CalculateAStar(Node startingNode, Node goalNode)
     {
-        var nodoInicial = NodoMasCercano(PosInicial);
-        nodoInicial.heuristic = 0;  
-        var nodoFinal = NodoMasCercano(PosFinal);
+        var frontier = new PriorityQueue<Node>();
+        frontier.Enqueue(startingNode, 0);
 
-        var openNode = new PriorityQueue<Node>();
-        var closeNode = new HashSet<Node>();
+        Dictionary<Node, Node> cameFrom = new Dictionary<Node, Node>();
+        Dictionary<Node, int> costSoFar = new Dictionary<Node, int>();
+        costSoFar.Add(startingNode, 0);
 
-        openNode.Enqueue(nodoInicial, nodoInicial.heuristic);
-
-        var watchDog = 5000;
-        while (openNode.Count > 0 && watchDog > 0)
+        while (frontier.Count > 0)
         {
-            var actualNode = openNode.Dequeue();
+            var current = frontier.Dequeue();
 
-            if (actualNode == nodoFinal)
+            if (current == goalNode)
             {
-                break;
-            }
-            Debug.Log(watchDog);
-            watchDog--;
+                List<Node> path = new List<Node>();
 
-            foreach (var vecino in actualNode.Vecinos)
-            {
-                if (closeNode.Contains(vecino)) 
+                while (current != startingNode)
                 {
-                    continue;
+                    path.Add(current);
+                    current = cameFrom[current];
                 }
-
-                var heuristic = actualNode.heuristic +
-                    Vector3.Distance(actualNode.transform.position, vecino.transform.position) +
-                    Vector3.Distance(nodoFinal.transform.position, vecino.transform.position);
-
-                var heuristicMismaDist = actualNode.heuristic + 1 + 
-                    Vector3.Distance(nodoFinal.transform.position, vecino.transform.position);
-
-                if (vecino.heuristic > heuristic)
-                {
-                    vecino.heuristic = heuristic;
-                    vecino.nodoPrevio = actualNode;
-                }
-
-                openNode.Enqueue(vecino, vecino.heuristic);
+                path.Reverse();
+                return path;
             }
-            closeNode.Add(actualNode); 
-        }
-
-        var path = new List<Node>();
-        var nodePath = nodoFinal;
-        path.Add(nodePath);
-        var numberOfNode = 5000;
-        while (nodePath != nodoInicial)
-        {
-            numberOfNode--;
-            Debug.Log("se sumo un nodo a la lista: " + numberOfNode);
-            nodePath = nodePath.nodoPrevio;
-            path.Add(nodePath);
-        }
-
-        path.Reverse();
-        return path;
-    }
-
-    private Node NodoMasCercano(Vector3 punto)
-    {
-        var rangoBusqueda = 2;
-        var colliders = Physics.OverlapSphere(punto, rangoBusqueda, LayerMask.GetMask("Node"));
-
-        colliders = GetNodoEnVision(punto, colliders).ToArray();
-
-        while(colliders.Length == 0)
-        {
-            rangoBusqueda *= 2;
-
-            colliders = Physics.OverlapSphere(punto, rangoBusqueda, LayerMask.GetMask("Node"));
-
-            colliders = GetNodoEnVision(punto, colliders).ToArray();
-        }
-
-        var nodoCercano = colliders[0];
-        var distanciaMin = Vector3.Distance(punto, nodoCercano.transform.position);
-
-        for (int i = 1; i < colliders.Length; i++)
-        {
-            if (Vector3.Distance(colliders[0].transform.position, punto) < distanciaMin)
+            foreach (var next in current.Vecinos)
             {
-                nodoCercano = colliders[i];
-                distanciaMin = Vector3.Distance(punto, nodoCercano.transform.position);
+                int newCost = costSoFar[current] + next.heuristic;
+                float priority = newCost + Vector3.Distance(next.transform.position, goalNode.transform.position);
+
+                if (!costSoFar.ContainsKey(next))
+                {
+                    costSoFar.Add(next, newCost);
+                    frontier.Enqueue(next, priority);
+                    cameFrom.Add(next, current);
+                }
+                else if (costSoFar[next] > newCost)
+                {
+                    frontier.Enqueue(next, priority);
+                    cameFrom[next] = current;
+                    costSoFar[next] = newCost;
+                }
             }
         }
 
-        return nodoCercano.GetComponent<Node>();
-    }
-
-    public List<Collider> GetNodoEnVision(Vector3 from, Collider[] colliders)
-    {
-        var nodoEnVision = new List<Collider>();
-
-        foreach (var collider in colliders) 
-        {
-            if (EnVision(from, collider.transform.position))
-                nodoEnVision.Add(collider);
-        }
-        return nodoEnVision;
-    }
-
-    public static bool EnVision(Vector3 from, Vector3 to)
-    {
-        var dir = to - from;
-        return !Physics.Raycast(from, dir, dir.magnitude, LayerMask.GetMask("wall"));
+        return new List<Node>();
     }
 }

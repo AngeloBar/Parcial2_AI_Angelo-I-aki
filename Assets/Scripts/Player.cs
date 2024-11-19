@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -26,4 +27,16 @@ public class Player : MonoBehaviour
         transform.position += direction * speed * Time.deltaTime;
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "Enemy")
+        {
+            SceneManager.LoadScene("Parcial2");
+        }
+
+        if (collision.gameObject.tag == "WinZone")
+        {
+            SceneManager.LoadScene("WinScreen");
+        }
+    }
 }
